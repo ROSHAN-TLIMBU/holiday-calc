@@ -1,0 +1,879 @@
+
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <title>Holiday Hours Balance Calculator — Simple & Advanced Modes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #0f172a; --bg-elev: #111827; --text: #e5e7eb; --muted: #94a3b8;
+      --border: #1f2937; --input: #0b1220; --tile: rgba(255,255,255,0.03);
+      --primary: #3b82f6; --primary-600: #2563eb;
+      --success: #22c55e; --warn: #f59e0b; --danger: #ef4444;
+      --accent-ring: rgba(59,130,246,0.35);
+      --shadow: 0 12px 40px rgba(0,0,0,0.30);
+    }
+    html[data-theme="light"] {
+      --bg: #f5f7fb; --bg-elev: #ffffff; --text: #0f172a; --muted: #475569;
+      --border: #e5e7eb; --input: #ffffff; --tile: rgba(15,23,42,0.03);
+      --accent-ring: rgba(37,99,235,0.15); --shadow: 0 8px 24px rgba(0,0,0,0.08);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:
+        radial-gradient(1400px 700px at 15% -5%, rgba(59,130,246,0.08), transparent 60%),
+        radial-gradient(1000px 500px at 85% -10%, rgba(34,197,94,0.06), transparent 50%),
+        var(--bg);
+      color:var(--text);
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial,"Noto Sans","Liberation Sans",sans-serif;
+      line-height:1.45;
+    }
+    .container{max-width:1180px;margin:32px auto;padding:0 18px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px}
+    header h1{margin:0 0 6px;font-weight:800}
+    header p{margin:0;color:var(--muted)}
+
+    .toggle-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .toggle-btn{
+      display:inline-flex;align-items:center;gap:8px;background:var(--tile);
+      border:1px solid var(--border);border-radius:999px;padding:8px 12px;cursor:pointer;color:var(--text)
+    }
+    .toggle-btn .dot{width:14px;height:14px;border-radius:999px;background:var(--primary);box-shadow:0 0 0 3px var(--accent-ring)}
+
+    /* Cards */
+    .card{
+      background:linear-gradient(180deg, rgba(31,41,55,.55), rgba(17,24,39,.85));
+      border:2px solid var(--border); border-radius:18px; padding:18px; box-shadow:var(--shadow);
+    }
+    html[data-theme="light"] .card{background:var(--bg-elev)}
+    .card.emphasis{
+      border-color: rgba(59,130,246,0.6);
+      box-shadow: 0 0 0 3px var(--accent-ring), var(--shadow);
+    }
+    .card-title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+    .card-title h2{margin:0;font-weight:800}
+    .badge{font-size:.78rem;border:1px solid var(--border);border-radius:999px;padding:4px 8px;color:var(--muted);background:rgba(59,130,246,.12)}
+
+    /* Form elements & layout */
+    .grid{display:grid;gap:14px}
+    .grid-2{grid-template-columns:1fr}
+    .grid-3{grid-template-columns:1fr}
+    @media(min-width:900px){.grid-2{grid-template-columns:1fr 1fr}.grid-3{grid-template-columns:1fr 1fr 1fr}}
+    label{display:block;font-size:.92rem;color:var(--muted);margin-bottom:6px}
+    input,select{
+      width:100%; border:1px solid var(--border); background:var(--input); color:var(--text);
+      border-radius:12px; padding:12px 14px; outline:none; transition:border-color .15s ease,box-shadow .15s ease
+    }
+    input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--accent-ring)}
+    .hint{font-size:.88rem;color:var(--muted);margin-top:6px}
+
+    /* Buttons */
+    .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    button{
+      background:linear-gradient(180deg,var(--primary),var(--primary-600));color:#fff;border:none;border-radius:12px;
+      padding:12px 16px;font-weight:700;letter-spacing:.2px;cursor:pointer;transition:transform .08s ease,box-shadow .15s ease,opacity .15s ease
+    }
+    button:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(29,78,216,.35)}
+    button.secondary{background:linear-gradient(180deg,#10b981,#059669)}
+    button.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+    .btn-preset{background:transparent;border:1px dashed rgba(59,130,246,.6);color:#93c5fd;padding:10px 14px}
+    .btn-print{background:linear-gradient(180deg,#6366f1,#4f46e5)}
+    button.danger{background:linear-gradient(180deg,#ef4444,#dc2626)}
+
+    /* Simple results */
+    #simpleResults .row {display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    #simpleResults .tile{background:var(--tile);border:1px solid var(--border);border-radius:14px;padding:14px}
+    #simpleResults h3{margin:0;font-size:.95rem;color:var(--muted);font-weight:700}
+    #simpleResults .value{margin-top:6px;font-size:1.8rem;font-weight:800;letter-spacing:.2px}
+    #simpleResults .line{margin-top:10px;color:var(--muted);font-size:.95rem}
+
+    /* Holidays rows + validation pills */
+    .holiday-row{display:grid;grid-template-columns:1.2fr 1fr auto;gap:10px;margin-top:8px;align-items:center}
+    .holiday-row input{padding:10px 12px}
+    .pill{
+      display:inline-block; font-size:.78rem; padding:6px 10px; border-radius:999px; border:1px solid var(--border); color:var(--muted); background:rgba(255,255,255,.04);
+      margin-left:6px;
+    }
+    .pill.ok{border-color:rgba(34,197,94,.6); color:#98e1ad}
+    .pill.err{border-color:rgba(239,68,68,.7); color:#fca5a5}
+
+    /* KPI tiles */
+    .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:12px}
+    .tile{background:var(--tile);border:1px solid var(--border);border-radius:14px;padding:14px;min-height:110px}
+    .tile h3{margin:0;font-size:.92rem;color:var(--muted);font-weight:700}
+    .tile .value{margin-top:6px;font-size:1.8rem;font-weight:800;letter-spacing:.2px}
+    .tile .sub{color:var(--muted);font-size:.9rem;margin-top:2px}
+
+    /* Stacked bar */
+    .stackcard{background:var(--tile);border:1px solid var(--border);border-radius:14px;padding:14px;margin-top:14px}
+    .stackbar{height:16px;border-radius:999px;overflow:hidden;background:rgba(148,163,184,.2);border:1px solid var(--border);display:flex}
+    .stackbar .seg{height:100%;flex:0 0 auto}
+    .seg-red{background:linear-gradient(90deg,rgba(239,68,68,.95),rgba(220,38,38,.95))}
+    .seg-green{background:linear-gradient(90deg,rgba(34,197,94,.95),rgba(16,185,129,.95))}
+    .stackmeta{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:8px;color:var(--muted);font-size:.92rem}
+    .legend{display:flex;gap:10px;flex-wrap:wrap}
+    .legend .key{display:inline-flex;align-items:center;gap:6px}
+    .legend .dot{width:10px;height:10px;border-radius:2px}
+    .dot-green{background:var(--success)}
+    .dot-red{background:var(--danger)}
+    .dot-blue{background:var(--primary)}
+
+    /* Calendar */
+    .calcard{background:var(--tile);border:1px solid var(--border);border-radius:14px;padding:14px;margin-top:14px}
+    .cal-wrap{display:grid;gap:16px}
+    @media(min-width:900px){.cal-wrap{grid-template-columns:1fr 1fr}}
+    .month{border:1px solid var(--border);border-radius:12px;overflow:hidden}
+    .month-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(255,255,255,.04);border-bottom:1px solid var(--border)}
+    .month-header h4{margin:0;font-size:1rem;font-weight:800}
+    .cal-grid{display:grid;grid-template-columns:repeat(7,1fr)}
+    .wd{padding:6px 8px;font-size:.86rem;color:var(--muted);text-align:center;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02)}
+    .cell{min-height:68px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:6px 8px;position:relative}
+    .cell:nth-child(7n){border-right:none}
+    .date-num{font-weight:800;font-size:.9rem;opacity:.9}
+    .badge{position:absolute;bottom:6px;right:6px;font-size:.7rem;padding:3px 6px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.05)}
+    .in.work{background:rgba(34,197,94,.07)}
+    .in.off{background:rgba(59,130,246,.05)}
+    .holiday-work{outline:2px solid rgba(34,197,94,.8);outline-offset:-2px}
+    .holiday-off{outline:2px solid rgba(245,158,11,.8);outline-offset:-2px}
+    .out{color:var(--muted);background:rgba(148,163,184,.05)}
+    .anchor{box-shadow:0 0 0 2px rgba(59,130,246,.8) inset}
+    .cal-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;color:var(--muted);font-size:.9rem}
+    .sw{width:14px;height:14px;border-radius:2px;display:inline-block;margin-right:6px;border:1px solid var(--border)}
+    .sw-work{background:rgba(34,197,94,.18)}
+    .sw-off{background:rgba(59,130,246,.18)}
+    .sw-hw{background:transparent;border:2px solid rgba(34,197,94,.8)}
+    .sw-ho{background:transparent;border:2px solid rgba(245,158,11,.8)}
+    .sw-anchor{background:transparent;border:2px solid rgba(59,130,246,.8)}
+
+    .error-text{color:#fca5a5;font-size:.85rem;margin-top:4px}
+    .ok-text{color:#98e1ad;font-size:.85rem;margin-top:4px}
+
+    /* Simple/Advanced display rules */
+    body.simple #simplePanel{display:block}
+    body.simple #simpleResults{display:block}
+    body.simple #moreOptions{display:block} /* details visible; collapsed by default */
+    body.simple #advancedContent{display:none}
+
+    /* CHANGED: keep simplePanel visible in Advanced mode too */
+    body:not(.simple) #simplePanel{display:block}
+    /* Keep minimal Simple results hidden in Advanced mode (change to block if you want them too) */
+    body:not(.simple) #simpleResults{display:none}
+    body:not(.simple) #advancedContent{display:block}
+
+    /* Print */
+    #printMeta{display:none}
+    @media print {
+      * { box-shadow:none !important; text-shadow:none !important; }
+      body { background:#fff; color:#000; }
+      header .toggle-row, details#moreOptions summary { display:none !important; }
+      .card { background:#fff; border:1px solid #ccc; }
+      #printMeta { display:block; margin-bottom:12px; font-size:0.95rem; }
+      #simplePanel { display:none !important; } /* keep outputs clean */
+    }
+  </style>
+</head>
+<body class="simple">
+  <div class="container">
+    <!-- HEADER -->
+    <header>
+      <div>
+        <h1>Holiday Hours Balance Calculator</h1>
+        <p>
+          4‑on / 4‑off. <strong>Calculation period</strong> is anchored to your
+          <strong>payslip end date</strong>. Accrual starts <strong>the day after</strong> that date.
+        </p>
+      </div>
+
+      <div class="toggle-row">
+        <!-- Theme toggle -->
+        <button id="themeBtn" class="toggle-btn" aria-label="Toggle theme">
+          <span class="dot"></span><span>Theme</span>
+        </button>
+
+        <!-- Mode toggle (Simple <-> Advanced) -->
+        <button id="modeBtn" class="toggle-btn" aria-label="Switch mode">
+          <span class="dot"></span>
+          <span id="modeBtnText">Advanced mode</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- SIMPLE MODE: core inputs (kept visible in Advanced as requested) -->
+    <section id="simplePanel" class="card emphasis" aria-label="Simple mode">
+      <div class="card-title">
+        <h2>CORE DETAILS</h2>
+        <span class="badge">Core inputs only</span>
+      </div>
+      <div class="grid grid-2">
+        <div>
+          <label for="shift">Shift</label>
+          <select id="shift">
+            <option value="">Select shift…</option>
+            <option value="Grey">Grey</option>
+            <option value="Brown">Brown</option>
+            <option value="Gold">Gold</option>
+            <option value="Orange">Orange</option>
+          </select>
+          <p id="refInfo" class="hint">Closest first work day (for your reference): —</p>
+        </div>
+        <div>
+          <label for="endDate">End of calculation period</label>
+          <input type="date" id="endDate" />
+          <p class="hint"><strong>Calculate up to</strong> this date. (Start = day after payslip end date.)</p>
+        </div>
+      </div>
+
+      <div class="grid grid-2" style="margin-top:12px;">
+        <div>
+          <label for="payslipDate">W/E (payslip end date)</label>
+          <input type="date" id="payslipDate" />
+        </div>
+        <div>
+          <label for="payslipBalance">Current holiday balance (hours)</label>
+          <input type="number" id="payslipBalance" step="0.001" placeholder="e.g., 10" />
+        </div>
+      </div>
+
+      <div class="btns">
+        <button id="calcSimpleBtn" type="button">Calculate</button>
+      </div>
+
+      <!-- Minimal outputs (kept hidden in Advanced to avoid clutter) -->
+      <div id="simpleResults" style="margin-top:14px;">
+        <div id="simpleNotice"></div>
+        <div class="row">
+          <div class="tile">
+            <h3>Accrual in this period</h3>
+            <div id="simpleAccrual" class="value">0.000</div>
+          </div>
+          <div class="tile">
+            <h3>New balance</h3>
+            <div id="simpleNewBalance" class="value">0.000</div>
+          </div>
+        </div>
+        <div id="simpleLine" class="line">Current balance — · Accrual — · New balance —</div>
+      </div>
+    </section>
+
+    <!-- Everything else (Advanced) -->
+    <details id="moreOptions">
+      <summary>More options (Holidays, Advanced settings & detailed outputs)</summary>
+      <div class="content" id="advancedContent">
+        <!-- Actions/presets -->
+        <section class="card emphasis" style="margin-top:12px;">
+          <div class="card-title">
+            <h2>Actions & presets</h2>
+            <span class="badge">Optional</span>
+          </div>
+          <div class="btns">
+            <button id="calcBtn" type="button">Calculate (advanced)</button>
+            <button class="secondary" id="prefillBtn" type="button">Use Prefilled Data</button>
+            <button class="ghost" id="resetBtn" type="button">Reset</button>
+            <button class="btn-preset" id="presetThisMonth" type="button">This month</button>
+            <button class="btn-preset" id="presetNextMonth" type="button">Next month</button>
+            <button class="btn-preset" id="preset30Days" type="button">+30 days</button>
+            <button class="btn-print" id="printBtn" type="button">Print summary</button>
+          </div>
+        </section>
+
+        <!-- Holidays -->
+        <section class="card emphasis" aria-label="Holidays in calculation period" style="margin-top:16px;">
+          <div class="card-title">
+            <h2>Holidays in calculation period</h2>
+            <span class="badge">Affects accrual & balance</span>
+          </div>
+          <details id="holidaysPanel">
+            <summary>Add & validate holidays (work days only)</summary>
+            <div class="content">
+              <p class="hint">Only holidays on <strong>work days</strong> inside the calculation period count. Off‑day or outside‑period entries are ignored.</p>
+              <div id="holidaysContainer"></div>
+              <div class="btns" style="margin-top:8px;">
+                <button class="secondary" id="addHolidayBtn" type="button">Add holiday</button>
+                <button class="ghost" id="clearHolidaysBtn" type="button">Clear holidays</button>
+              </div>
+              <div id="holidayErrors" class="error-text" style="display:none;"></div>
+            </div>
+          </details>
+        </section>
+
+        <!-- Advanced settings -->
+        <section class="card" aria-label="Advanced settings" style="margin-top:16px;">
+          <details>
+            <summary>Advanced settings (defaults hidden)</summary>
+            <div class="content">
+              <div class="grid grid-3" style="margin-top:12px;">
+                <div>
+                  <label for="accrualPer11">Accrual per 11 working hours</label>
+                  <input type="number" id="accrualPer11" step="0.001" value="1.812" />
+                  <p class="hint">Default: 1.812</p>
+                </div>
+                <div>
+                  <label for="hoursPerDay">Hours per working day</label>
+                  <input type="number" id="hoursPerDay" step="0.01" value="11" />
+                  <p class="hint">Default: 11</p>
+                </div>
+                <div>
+                  <label for="reduceAccrual" style="display:block;margin-bottom:8px;">Reduce accrual on holiday work days</label>
+                  <input type="checkbox" id="reduceAccrual" checked />
+                  <p class="hint">Reduction per date = <code>min(1, holiday hours / hours per day)</code>.</p>
+                </div>
+              </div>
+            </div>
+          </details>
+        </section>
+
+        <!-- Results (advanced) -->
+        <section class="card" aria-label="Results" style="margin-top:16px;">
+          <div id="printMeta"></div>
+          <div id="offDayNotice"></div>
+          <div class="kpi" id="kpiWrap"></div>
+
+          <div class="stackcard">
+            <h4 style="margin: 0 0 8px; color: var(--muted);">Work days — base vs reduction</h4>
+            <div class="stackbar" aria-label="Stacked work day bar">
+              <span id="segRed" class="seg seg-red" style="width:0%;"></span>
+              <span id="segGreen" class="seg seg-green" style="width:0%;"></span>
+            </div>
+            <div class="stackmeta">
+              <div class="legend">
+                <span class="key"><span class="dot dot-green"></span>Adjusted work days</span>
+                <span class="key"><span class="dot dot-red"></span>Reduction from holidays</span>
+              </div>
+              <span id="stackbarMeta">Base: 0.000 | Reduced: 0.000 | Adjusted: 0.000</span>
+            </div>
+          </div>
+
+          <div class="calcard">
+            <h4 style="margin: 0 0 8px; color: var(--muted);">Calendar — Work/Off days & Holidays</h4>
+            <div id="calendar" class="cal-wrap"></div>
+            <div class="cal-legend">
+              <span><span class="sw sw-work"></span>Work day (green tint)</span>
+              <span><span class="sw sw-off"></span>Off day (blue tint)</span>
+              <span><span class="sw sw-hw"></span>Holiday on work day (green ring)</span>
+              <span><span class="sw sw-ho"></span>Holiday on off day (amber ring — ignored)</span>
+              <span><span class="sw sw-anchor"></span>Payslip end date (anchor)</span>
+            </div>
+            <div class="hint">The payslip end date is highlighted as the <strong>anchor</strong>; calculation period starts the next day.</div>
+          </div>
+
+          <details style="margin-top:10px;">
+            <summary>Holiday details & calculation model</summary>
+            <div class="content">
+              <div id="detailsList" style="margin-top:10px;"></div>
+              <div class="tile" style="margin-top:10px;">
+                <h3>Calculation period model</h3>
+                <div class="sub">
+                  Start = <strong>Payslip end date + 1 day</strong> → End = <strong>Calculate balance up to</strong><br/>
+                  BaseWorkDays = count of work days in [Start, End]<br/>
+                  WorkDayReduction = Σ min(1, HolidayHours(date) / HoursPerDay) on work‑day holidays<br/>
+                  AdjustedWorkDays = BaseWorkDays − WorkDayReduction<br/>
+                  AccrualPerDay = (AccrualPer11 / 11) × HoursPerDay<br/>
+                  AccruedHours = AdjustedWorkDays × AccrualPerDay<br/>
+                  NewBalance = PayslipBalance + AccruedHours − UsedHolidayHours (work days only)
+                </div>
+              </div>
+            </div>
+          </details>
+        </section>
+      </div>
+    </details>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      /* Utilities */
+      const MS_PER_DAY = 24 * 60 * 60 * 1000;
+      const parseDateUTC = (iso) => { if (!iso) return null; const [y,m,d] = iso.split("-").map(Number); return new Date(Date.UTC(y, m-1, d)); };
+      const isoUTC = (dateUTC) => dateUTC.toISOString().slice(0, 10);
+      const inclusiveDaysBetweenUTC = (startUTC, endUTC) => Math.floor((endUTC.getTime() - startUTC.getTime()) / MS_PER_DAY) + 1;
+      const fmt = (n,d=3) => Number.isFinite(n) ? n.toFixed(d) : "—";
+
+      /* Shift references */
+      const baseOrigins = {
+        Grey: parseDateUTC("2025-12-08"),
+        Brown: parseDateUTC("2025-12-08"),
+        Gold: parseDateUTC("2025-12-12"),
+        Orange: parseDateUTC("2025-12-12")
+      };
+      const logicOrigin = (shift) => baseOrigins[shift] || null;
+      const isWorkDay = (dateUTC, originUTC) => {
+        if (!dateUTC || !originUTC) return false;
+        const diffDays = Math.floor((dateUTC.getTime() - originUTC.getTime()) / MS_PER_DAY);
+        const pos = ((diffDays % 8) + 8) % 8;
+        return pos < 4; // 0..3 work, 4..7 off
+      };
+
+      /* DOM refs */
+      const shiftEl = document.getElementById("shift");
+      const refInfoEl = document.getElementById("refInfo");
+      const payslipDateEl = document.getElementById("payslipDate");
+      const payslipBalanceEl = document.getElementById("payslipBalance");
+      const endDateEl = document.getElementById("endDate");
+
+      const simpleAccrualEl = document.getElementById("simpleAccrual");
+      const simpleNewBalanceEl = document.getElementById("simpleNewBalance");
+      const simpleLineEl = document.getElementById("simpleLine");
+      const simpleNoticeEl = document.getElementById("simpleNotice");
+
+      const holidaysContainer = document.getElementById("holidaysContainer");
+      const holidayErrorsEl = document.getElementById("holidayErrors");
+      const offDayNoticeEl = document.getElementById("offDayNotice");
+      const kpiWrap = document.getElementById("kpiWrap");
+      const detailsList = document.getElementById("detailsList");
+      const calendarEl = document.getElementById("calendar");
+      const segRed = document.getElementById("segRed");
+      const segGreen = document.getElementById("segGreen");
+      const stackbarMeta = document.getElementById("stackbarMeta");
+      const printMeta = document.getElementById("printMeta");
+
+      /* Theme toggle */
+      const themeBtn = document.getElementById("themeBtn");
+      if (themeBtn) {
+        themeBtn.addEventListener("click", () => {
+          const html = document.documentElement;
+          html.setAttribute("data-theme", html.getAttribute("data-theme") === "dark" ? "light" : "dark");
+        });
+      }
+
+      /* Mode toggle */
+      function setMode(simpleOn) {
+        document.body.classList.toggle('simple', !!simpleOn);
+        const more = document.getElementById('moreOptions');
+        if (more) more.open = !simpleOn; // Advanced open, Simple collapsed
+        const labelEl = document.getElementById('modeBtnText');
+        if (labelEl) labelEl.textContent = simpleOn ? 'Advanced mode' : 'Simple mode';
+      }
+      function getInitialMode() { return true; } // default to Simple
+      const modeBtn = document.getElementById('modeBtn');
+      if (modeBtn) {
+        modeBtn.addEventListener('click', () => {
+          const nowSimple = document.body.classList.contains('simple');
+          setMode(!nowSimple);
+        });
+      }
+      setMode(getInitialMode());
+
+      /* Reference info: next upcoming first work day */
+      function nextFirstWorkDay(shift) {
+        const originUTC = logicOrigin(shift);
+        if (!originUTC) return null;
+        const n = new Date();
+        const todayUTC = new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate()));
+        const diffDays = Math.floor((todayUTC.getTime() - originUTC.getTime()) / MS_PER_DAY);
+        const mod = ((diffDays % 8) + 8) % 8;
+        const daysAhead = (8 - mod) % 8;
+        return new Date(todayUTC.getTime() + daysAhead * MS_PER_DAY);
+      }
+      function updateReferenceInfo() {
+        const shift = shiftEl.value;
+        const d = nextFirstWorkDay(shift);
+        refInfoEl.textContent = d ? `Closest first work day (reference): ${isoUTC(d)}` : `Closest first work day (reference): —`;
+        validateHolidays();
+      }
+      shiftEl.addEventListener("change", updateReferenceInfo);
+
+      /* Simple compute (defaults, no holidays) */
+      function computeSimple() {
+        const errors = [];
+        const shift = shiftEl.value;
+        const originUTC = logicOrigin(shift);
+        if (!shift) errors.push("Please select a shift.");
+        if (!originUTC) errors.push("Shift reference day could not be determined.");
+        const payslipDate = parseDateUTC(payslipDateEl.value);
+        const endDate = parseDateUTC(endDateEl.value);
+        const balance = Number(payslipBalanceEl.value);
+        const accr11 = 1.812; // default
+        const hpd = 11;       // default
+
+        if (!payslipDate) errors.push("Please enter a valid W/E (payslip end date).");
+        if (!endDate) errors.push("Please enter a valid end of calculation period.");
+        if (!Number.isFinite(balance)) errors.push("Please enter a valid current holiday balance (hours).");
+
+        const startUTC = payslipDate ? new Date(payslipDate.getTime() + MS_PER_DAY) : null;
+        if (startUTC && endDate && endDate.getTime() < startUTC.getTime()) {
+          errors.push("End of calculation period is before the start (day after payslip end date).");
+        }
+        if (errors.length) return { errors };
+
+        const totalDays = inclusiveDaysBetweenUTC(startUTC, endDate);
+        let baseWorkDays = 0;
+        for (let i = 0; i < totalDays; i++) {
+          const dateUTC = new Date(startUTC.getTime() + i * MS_PER_DAY);
+          if (isWorkDay(dateUTC, originUTC)) baseWorkDays++;
+        }
+
+        const accrualPerDay = (accr11 / 11) * hpd;
+        const accruedHours = baseWorkDays * accrualPerDay;
+        const newBalance = balance + accruedHours;
+
+        return { errors: [], balance, accruedHours, newBalance };
+      }
+      function renderSimple() {
+        const res = computeSimple();
+        if (res.errors && res.errors.length) {
+          simpleNoticeEl.innerHTML = `<div class="card" style="border-color: rgba(239,68,68,0.5); background: rgba(239,68,68,0.08);"><strong>Error:</strong> ${res.errors.join("<br/>")}</div>`;
+          simpleAccrualEl.textContent = "—";
+          simpleNewBalanceEl.textContent = "—";
+          simpleLineEl.textContent = "Current balance — · Accrual — · New balance —";
+          return;
+        } else {
+          simpleNoticeEl.innerHTML = "";
+        }
+        simpleAccrualEl.textContent = fmt(res.accruedHours);
+        simpleNewBalanceEl.textContent = fmt(res.newBalance);
+        simpleLineEl.textContent = `Current balance ${fmt(res.balance)} · Accrual ${fmt(res.accruedHours)} · New balance ${fmt(res.newBalance)}`;
+      }
+      document.getElementById("calcSimpleBtn").addEventListener("click", renderSimple);
+
+      /* Holidays (advanced) */
+      function addHolidayRow(dateVal = "", hoursVal = "") {
+        const row = document.createElement("div");
+        row.className = "holiday-row";
+        row.innerHTML = `
+          <input type="date" class="holiday-date" value="${dateVal}" />
+          <input type="number" class="holiday-hours" step="0.01" placeholder="Hours (e.g., 11)" value="${hoursVal}" />
+          <button class="danger" type="button">Remove</button>
+        `;
+        const dateInput = row.querySelector(".holiday-date");
+        const hoursInput = row.querySelector(".holiday-hours");
+        dateInput.addEventListener("input", validateHolidays);
+        hoursInput.addEventListener("input", validateHolidays);
+        row.querySelector("button").addEventListener("click", () => { holidaysContainer.removeChild(row); validateHolidays(); });
+        holidaysContainer.appendChild(row);
+        validateHolidays();
+      }
+      document.getElementById("addHolidayBtn").addEventListener("click", () => addHolidayRow());
+      document.getElementById("clearHolidaysBtn").addEventListener("click", () => { holidaysContainer.innerHTML = ""; validateHolidays(); });
+
+      function validateHolidays() {
+        holidayErrorsEl.style.display = "none";
+        holidayErrorsEl.textContent = "";
+
+        const startUTC = payslipDateEl.value ? new Date(parseDateUTC(payslipDateEl.value).getTime() + MS_PER_DAY) : null;
+        const endUTC = endDateEl.value ? parseDateUTC(endDateEl.value) : null;
+        const originUTC = logicOrigin(shiftEl.value);
+
+        let issues = 0;
+        const rows = Array.from(holidaysContainer.querySelectorAll(".holiday-row"));
+        rows.forEach(row => {
+          const old = row.querySelector(".pill"); if (old) old.remove();
+          const dateStr = row.querySelector(".holiday-date").value;
+          const hrsStr = row.querySelector(".holiday-hours").value;
+          const hDate = parseDateUTC(dateStr);
+          const hrs = Number(hrsStr);
+
+          let msg = "";
+          if (!hDate || !Number.isFinite(hrs) || hrs <= 0) {
+            msg = "Enter a valid date and hours > 0.";
+          } else if (!startUTC || !endUTC || !originUTC) {
+            msg = "Select shift, payslip end date, and end date first.";
+          } else if (hDate < startUTC || hDate > endUTC) {
+            msg = "Outside calculation period (ignored).";
+          } else if (!isWorkDay(hDate, originUTC)) {
+            msg = "Off day (ignored).";
+          }
+
+          const pill = document.createElement("span");
+          pill.className = "pill";
+          pill.textContent = msg ? msg : "OK";
+          pill.classList.add(msg ? "err" : "ok");
+          row.appendChild(pill);
+
+          if (msg) issues++;
+        });
+
+        if (issues > 0) {
+          holidayErrorsEl.style.display = "block";
+          holidayErrorsEl.textContent = `${issues} holiday entr${issues===1?"y has":"ies have"} warnings (invalid/off‑day/out‑of‑period). They’ll be ignored in the calculation.`;
+        }
+      }
+
+      /* Advanced calculation */
+      function inclusiveDaysCount(startUTC, endUTC) {
+        return Math.floor((endUTC.getTime() - startUTC.getTime()) / MS_PER_DAY) + 1;
+      }
+
+      function buildCalendar(shiftOriginUTC, startUTC, endUTC, holidayDetails, payslipDateUTC) {
+        if (!shiftOriginUTC || !startUTC || !endUTC) { calendarEl.innerHTML = ""; return; }
+
+        const holidayMap = new Map();
+        for (const h of holidayDetails) {
+          if (!h.inPeriod || !h.date) continue;
+          if (h.type !== "work" && h.type !== "off") continue;
+          const prev = holidayMap.get(h.date) || { type: null, hours: 0 };
+          const newType = (h.type === "work") ? "work" : (prev.type || "off");
+          holidayMap.set(h.date, { type: newType, hours: (prev.hours || 0) + (Number(h.hours) || 0) });
+        }
+
+        const firstMonthStart = new Date(Date.UTC(startUTC.getUTCFullYear(), startUTC.getUTCMonth(), 1));
+        const lastMonthEnd = new Date(Date.UTC(endUTC.getUTCFullYear(), endUTC.getUTCMonth()+1, 0));
+        const months = [];
+        let cursor = new Date(Date.UTC(firstMonthStart.getUTCFullYear(), firstMonthStart.getUTCMonth(), 1));
+        while (cursor <= lastMonthEnd) { months.push({ y: cursor.getUTCFullYear(), m: cursor.getUTCMonth() }); cursor = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth()+1, 1)); }
+        const monthName = (y, m) => new Date(Date.UTC(y, m, 1)).toLocaleString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+        const wd = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+        const html = months.map(({y,m})=>{
+          const first = new Date(Date.UTC(y, m, 1));
+          const firstDowSun0 = first.getUTCDay();
+          const firstDowMon0 = (firstDowSun0 + 6) % 7;
+          const lastDay = new Date(Date.UTC(y, m+1, 0)).getUTCDate();
+          const cells = [];
+          for (let i=0;i<firstDowMon0;i++) cells.push(null);
+          for (let d=1; d<=lastDay; d++) cells.push(new Date(Date.UTC(y, m, d)));
+          while (cells.length % 7 !== 0) cells.push(null);
+
+          const header = `<div class="month-header"><h4>${monthName(y,m)}</h4><span class="hint">${wd.join(" · ")}</span></div>`;
+          const wdRow = `<div class="cal-grid">${wd.map(x=>`<div class="wd">${x}</div>`).join('')}</div>`;
+
+          const grid = `
+            <div class="cal-grid">
+              ${cells.map(dateUTC=>{
+                if (!dateUTC) return `<div class="cell out"></div>`;
+                const iso = isoUTC(dateUTC);
+                const inPeriod = dateUTC >= startUTC && dateUTC <= endUTC;
+                const work = inPeriod ? isWorkDay(dateUTC, shiftOriginUTC) : false;
+                const classes = ['cell'];
+                let badge = '';
+                if (!inPeriod) { classes.push('out'); }
+                else { classes.push('in', work ? 'work' : 'off'); }
+                const h = holidayMap.get(iso);
+                if (h) {
+                  if (h.type === 'work') classes.push('holiday-work');
+                  if (h.type === 'off') classes.push('holiday-off');
+                  badge = `<span class="badge">${h.hours ? Number(h.hours).toFixed(1) : ''}h</span>`;
+                }
+                const isAnchor = payslipDateUTC && iso === isoUTC(payslipDateUTC);
+                if (isAnchor) classes.push('anchor');
+                return `<div class="${classes.join(' ')}" title="${iso}${inPeriod ? work ? ' · Work day' : ' · Off day' : ' · Out of period'}"><div class="date-num">${dateUTC.getUTCDate()}</div>${badge}</div>`;
+              }).join('')}
+            </div>
+          `;
+          return `<div class="month">${header}${wdRow}${grid}</div>`;
+        }).join('');
+        calendarEl.innerHTML = html;
+      }
+
+      function stackbarUpdate(base, reduction, adjusted) {
+        const b = Math.max(0, base);
+        let red = Math.max(0, Math.min(reduction, b));
+        let green = Math.max(0, Math.min(adjusted, b));
+        if (b <= 0) { segRed.style.width = "0%"; segGreen.style.width = "0%"; stackbarMeta.textContent = `Base: ${fmt(b)} | Reduced: ${fmt(red)} | Adjusted: ${fmt(green)}`; return; }
+        if (Math.abs((green + red) - b) > 1e-9) red = Math.max(0, b - green);
+        let redPct = (red / b) * 100; let greenPct = 100 - redPct;
+        if (red > 0 && redPct < 1) { segRed.style.width = '2px'; segGreen.style.width = 'calc(100% - 2px)'; }
+        else { segRed.style.width = `${Math.max(0, Math.min(100, redPct))}%`; segGreen.style.width = `${Math.max(0, Math.min(100, greenPct))}%`; }
+        stackbarMeta.textContent = `Base: ${fmt(b)} | Reduced: ${fmt(red)} | Adjusted: ${fmt(green)}`;
+      }
+
+      function calculate() {
+        const errors = [];
+        const shift = shiftEl.value;
+        const originUTC = logicOrigin(shift);
+        if (!shift) errors.push("Please select a shift.");
+        if (!originUTC) errors.push("Shift reference day could not be determined.");
+
+        const payslipDate = parseDateUTC(payslipDateEl.value);
+        const endDate = parseDateUTC(endDateEl.value);
+        const balance = Number(payslipBalanceEl.value);
+        const accr11 = Number(document.getElementById("accrualPer11").value);
+        const hpd = Number(document.getElementById("hoursPerDay").value);
+        const reduceAcc = !!document.getElementById("reduceAccrual").checked;
+
+        if (!payslipDate) errors.push("Please enter a valid payslip end date.");
+        if (!endDate) errors.push("Please enter a valid end of calculation period.");
+        if (!Number.isFinite(balance)) errors.push("Please enter a valid holiday balance (hours) from payslip.");
+        if (!Number.isFinite(accr11)) errors.push("Please enter a valid accrual per 11 hours.");
+        if (!Number.isFinite(hpd) || hpd <= 0) errors.push("Please enter valid hours per working day (> 0).");
+
+        const startUTC = payslipDate ? new Date(payslipDate.getTime() + MS_PER_DAY) : null;
+        if (startUTC && endDate && endDate.getTime() < startUTC.getTime()) {
+          errors.push("End of calculation period is before the start (day after payslip end date).");
+        }
+
+        if (errors.length) {
+          offDayNoticeEl.innerHTML = `<div class="card" style="border-color: rgba(239,68,68,0.5); background: rgba(239,68,68,0.08);"><strong>Error:</strong> ${errors.join("<br/>")}</div>`;
+          kpiWrap.innerHTML = ""; detailsList.innerHTML = ""; calendarEl.innerHTML = "";
+          stackbarUpdate(0,0,0);
+          return;
+        } else {
+          offDayNoticeEl.innerHTML = "";
+        }
+
+        const totalDays = inclusiveDaysCount(startUTC, endDate);
+        let baseWorkDays = 0;
+
+        const holidayEntries = Array.from(holidaysContainer.querySelectorAll(".holiday-row")).map(row => ({
+          date: row.querySelector(".holiday-date").value,
+          hours: row.querySelector(".holiday-hours").value
+        }));
+
+        const holMap = new Map();
+        let usedHolidayHours = 0;
+        const holidayDetails = [];
+        let ignoredCount = 0, ignoredHours = 0;
+
+        for (let i = 0; i < totalDays; i++) {
+          const dateUTC = new Date(startUTC.getTime() + i * MS_PER_DAY);
+          if (isWorkDay(dateUTC, originUTC)) baseWorkDays++;
+        }
+
+        for (const entry of holidayEntries) {
+          const hDate = parseDateUTC(entry.date);
+          const hrs = Number(entry.hours);
+          if (!hDate || !Number.isFinite(hrs) || hrs <= 0) {
+            ignoredCount++; ignoredHours += Number.isFinite(hrs) ? Math.max(0, hrs) : 0;
+            holidayDetails.push({ type:"invalid", date: entry.date || "—", hours: hrs || 0, inPeriod:false, isWork:false, reduction:0, note:"Invalid entry (ignored)" });
+            continue;
+          }
+          const inPeriod = hDate.getTime() >= startUTC.getTime() && hDate.getTime() <= endDate.getTime();
+          const work = inPeriod ? isWorkDay(hDate, originUTC) : false;
+          const key = isoUTC(hDate);
+
+        if (!inPeriod) {
+            ignoredCount++; ignoredHours += hrs;
+            holidayDetails.push({ type:"out", date:key, hours:hrs, inPeriod:false, isWork:false, reduction:0, note:"Outside calculation period (ignored)" });
+            continue;
+          }
+          if (!work) {
+            ignoredCount++; ignoredHours += hrs;
+            holidayDetails.push({ type:"off", date:key, hours:hrs, inPeriod:true, isWork:false, reduction:0, note:"Off day (ignored)" });
+            continue;
+          }
+
+          holMap.set(key, (holMap.get(key) || 0) + hrs);
+          usedHolidayHours += hrs;
+        }
+
+        let reducedWorkDays = 0;
+        for (const [iso, sumHours] of holMap.entries()) {
+          const reduction = reduceAcc ? Math.min(1, sumHours / hpd) : 0;
+          if (reduction > 0) reducedWorkDays += reduction;
+          holidayDetails.push({ type:"work", date: iso, hours: sumHours, inPeriod:true, isWork:true, reduction, note: reduction>0 ? "Counts & reduces accrual" : "Counts (no reduction toggle)" });
+        }
+
+        const adjustedWorkDays = Math.max(0, baseWorkDays - reducedWorkDays);
+        const accrualPerDay = (accr11 / 11) * hpd;
+        const accruedHours = adjustedWorkDays * accrualPerDay;
+        const newBalance = balance + accruedHours - usedHolidayHours;
+
+        if (ignoredCount > 0) {
+          offDayNoticeEl.innerHTML = `
+            <div class="card" style="border-color: rgba(245,158,11,0.5); background: rgba(245,158,11,0.08);">
+              <strong>Heads up:</strong> ${ignoredCount} holiday entr${ignoredCount===1?"y was":"ies were"} ignored (invalid/off‑day/out‑of‑period).
+              &nbsp;Ignored hours: ${fmt(ignoredHours,2)} h.
+            </div>`;
+        }
+
+        kpiWrap.innerHTML = `
+          <div class="tile">
+            <h3>New balance</h3>
+            <div class="value">${fmt(newBalance)}</div>
+            <div class="sub">Payslip balance + Accrued − Used</div>
+          </div>
+          <div class="tile">
+            <h3>Accrued in calculation period</h3>
+            <div class="value">${fmt(accruedHours)}</div>
+            <div class="sub">${fmt(adjustedWorkDays)} work days × ${fmt(accrualPerDay)} h/day</div>
+          </div>
+          <div class="tile">
+            <h3>Holiday hours used</h3>
+            <div class="value" style="color: var(--danger)">${fmt(usedHolidayHours)}</div>
+            <div class="sub">Work‑day holidays in the period</div>
+          </div>
+          <div class="tile">
+            <h3>Calculation period</h3>
+            <div class="value" style="font-size:1.2rem">${isoUTC(new Date(payslipDate.getTime()+MS_PER_DAY))} → ${isoUTC(endDate)}</div>
+            <div class="sub">${fmt(inclusiveDaysCount(startUTC, endDate),0)} days</div>
+          </div>
+        `;
+
+        const per11 = Number(document.getElementById("accrualPer11").value);
+        printMeta.innerHTML = `
+          <div><strong>Shift:</strong> ${shift}</div>
+          <div><strong>Payslip end date:</strong> ${isoUTC(payslipDate)}</div>
+          <div><strong>Calculation period:</strong> ${isoUTC(new Date(payslipDate.getTime()+MS_PER_DAY))} → ${isoUTC(endDate)}</div>
+          <div><strong>Payslip balance (hours):</strong> ${fmt(balance,3)}</div>
+          <div><strong>Accrual per day:</strong> ${fmt(accrualPerDay,3)} (from ${fmt(per11,3)} per 11h × ${fmt(Number(document.getElementById("hoursPerDay").value),2)}h)</div>
+        `;
+
+        stackbarUpdate(baseWorkDays, reducedWorkDays, adjustedWorkDays);
+        const sorted = holidayDetails.sort((a,b)=> (a.date||"").localeCompare(b.date||""));
+        detailsList.innerHTML = `
+          <div class="list">
+            ${sorted.length === 0
+              ? `<div class="tile"><h3>No holidays applied</h3><div class="sub">Add holidays above to see impact on accrual.</div></div>`
+              : sorted.map(h=>{
+                  const msg = h.reduction ? ('Accrual reduction: ' + h.reduction.toFixed(2) + ' day') : h.note;
+                  const hrsTxt = Number.isFinite(h.hours) ? Number(h.hours).toFixed(2) : '—';
+                  const tag = h.inPeriod ? (h.isWork ? "(work day)" : "(off day)") : "(out of period)";
+                  return `
+                    <div class="tile" style="margin-top:8px;">
+                      <h3>${h.date} ${tag}</h3>
+                      <div class="sub">${hrsTxt} h — ${msg}</div>
+                    </div>
+                  `;
+                }).join("")}
+          </div>
+        `;
+
+        buildCalendar(originUTC, new Date(payslipDate.getTime()+MS_PER_DAY), endDate, holidayDetails, payslipDate);
+      }
+
+      /* Presets & actions (advanced) */
+      document.getElementById("calcBtn").addEventListener("click", calculate);
+      document.getElementById("prefillBtn").addEventListener("click", () => {
+        shiftEl.value = "Grey"; updateReferenceInfo();
+        payslipDateEl.value = "2025-12-15";
+        payslipBalanceEl.value = "81";
+        endDateEl.value = "2026-01-31";
+        document.getElementById("accrualPer11").value = "1.812";
+        document.getElementById("hoursPerDay").value = "11";
+        document.getElementById("reduceAccrual").checked = true;
+        holidaysContainer.innerHTML = "";
+        addHolidayRow("2025-12-20","11"); // work‑day holiday (counted)
+        addHolidayRow("2025-12-22","11"); // off‑day holiday (ignored)
+      });
+      document.getElementById("resetBtn").addEventListener("click", () => {
+        shiftEl.value = ""; updateReferenceInfo();
+        payslipDateEl.value = ""; payslipBalanceEl.value = "";
+        const todayISO = new Date().toISOString().slice(0,10);
+        endDateEl.value = todayISO;
+        document.getElementById("accrualPer11").value = "1.812";
+        document.getElementById("hoursPerDay").value = "11";
+        document.getElementById("reduceAccrual").checked = true;
+        holidaysContainer.innerHTML = ""; offDayNoticeEl.innerHTML = ""; kpiWrap.innerHTML = ""; detailsList.innerHTML = ""; calendarEl.innerHTML = ""; document.getElementById("printMeta").innerHTML = "";
+        segRed.style.width = "0%"; segGreen.style.width = "0%"; stackbarMeta.textContent = "Base: 0.000 | Reduced: 0.000 | Adjusted: 0.000";
+        holidayErrorsEl.style.display = "none"; holidayErrorsEl.textContent = "";
+        // Clear simple output too
+        simpleNoticeEl.innerHTML = "";
+        simpleAccrualEl.textContent = "0.000";
+        simpleNewBalanceEl.textContent = "0.000";
+        simpleLineEl.textContent = "Current balance — · Accrual — · New balance —";
+      });
+      document.getElementById("printBtn").addEventListener("click", () => window.print());
+      document.getElementById("presetThisMonth").addEventListener("click", () => {
+        const d = new Date(); const y = d.getUTCFullYear(), m = d.getUTCMonth();
+        const end = new Date(Date.UTC(y, m + 1, 0));
+        endDateEl.value = isoUTC(end); validateHolidays();
+      });
+      document.getElementById("presetNextMonth").addEventListener("click", () => {
+        const d = new Date(); const y = d.getUTCFullYear(), m = d.getUTCMonth();
+        const end = new Date(Date.UTC(y, m + 2, 0));
+        endDateEl.value = isoUTC(end); validateHolidays();
+      });
+      document.getElementById("preset30Days").addEventListener("click", () => {
+        const d = parseDateUTC(payslipDateEl.value) || new Date();
+        const end = new Date(d.getTime() + 30 * MS_PER_DAY);
+        endDateEl.value = isoUTC(end); validateHolidays();
+      });
+
+      /* Defaults */
+      endDateEl.value = new Date().toISOString().slice(0,10);
+      addHolidayRow();              // usability for advanced mode users
+      updateReferenceInfo();        // set reference label initially
+    });
+  </script>
+</</body>
